@@ -74,81 +74,81 @@ export async function authFetch(endpoint, options = {}) {
 const api = {
   // ── Recordatorios ──
   async getReminders() {
-    const res = await fetch(`${API_URL}/reminders/${NOLVI_USER_ID}`, { headers });
+    const res = await authFetch('/reminders/me');
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async createReminder(data) {
-    const res = await fetch(`${API_URL}/reminders/${NOLVI_USER_ID}`, {
-      method: 'POST', headers,
+    const res = await authFetch('/reminders/me', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async deleteReminder(id) {
-    const res = await fetch(`${API_URL}/reminders/${id}`, { method: 'DELETE', headers });
+    const res = await authFetch(`/reminders/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
 
   // ── Tareas ──
   async getTasks() {
-    const res = await fetch(`${API_URL}/tasks/${NOLVI_USER_ID}`, { headers });
+    const res = await authFetch('/tasks/me');
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async createTask(data) {
-    const res = await fetch(`${API_URL}/tasks/${NOLVI_USER_ID}`, {
-      method: 'POST', headers,
+    const res = await authFetch('/tasks/me', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async completeTask(id) {
-    const res = await fetch(`${API_URL}/tasks/${id}`, {
-      method: 'PATCH', headers,
+    const res = await authFetch(`/tasks/${id}`, {
+      method: 'PATCH',
       body: JSON.stringify({ is_completed: true }),
     });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async deleteTask(id) {
-    const res = await fetch(`${API_URL}/tasks/${id}`, { method: 'DELETE', headers });
+    const res = await authFetch(`/tasks/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
 
   // ── Gastos ──
   async getExpenses() {
-    const res = await fetch(`${API_URL}/expenses/${NOLVI_USER_ID}`, { headers });
+    const res = await authFetch('/expenses/me');
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async createExpense(data) {
-    const res = await fetch(`${API_URL}/expenses/${NOLVI_USER_ID}`, {
-      method: 'POST', headers,
+    const res = await authFetch('/expenses/me', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async deleteExpense(id) {
-    const res = await fetch(`${API_URL}/expenses/${id}`, { method: 'DELETE', headers });
+    const res = await authFetch(`/expenses/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
 
   // ── Cumpleaños ──
   async getBirthdays() {
-    const res = await fetch(`${API_URL}/birthdays/${NOLVI_USER_ID}`, { headers });
+    const res = await authFetch('/birthdays/me');
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
   async createBirthday(data) {
-    const res = await fetch(`${API_URL}/birthdays/${NOLVI_USER_ID}`, {
-      method: 'POST', headers,
+    const res = await authFetch('/birthdays/me', {
+      method: 'POST',
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Error');
