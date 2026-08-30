@@ -6,10 +6,10 @@ import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
 import C, { fonts } from '../theme';
 
-const fmtHour = (h) => {
+const fmtTime = (h, m) => {
   const suffix = h < 12 ? 'AM' : 'PM';
   const display = h % 12 === 0 ? 12 : h % 12;
-  return `${display}:00 ${suffix}`;
+  return `${display}:${String(m).padStart(2, '0')} ${suffix}`;
 };
 
 export default function BirthdaysScreen() {
@@ -21,6 +21,7 @@ export default function BirthdaysScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [advanceDays, setAdvanceDays] = useState(3);
   const [notifyHour, setNotifyHour] = useState(8);
+  const [notifyMinute, setNotifyMinute] = useState(0);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
@@ -36,6 +37,7 @@ export default function BirthdaysScreen() {
     setPickerDate(new Date());
     setAdvanceDays(3);
     setNotifyHour(8);
+    setNotifyMinute(0);
     setEditingId(null);
     setShowModal(true);
   };
@@ -46,6 +48,7 @@ export default function BirthdaysScreen() {
     setPickerDate(new Date(item.birth_date));
     setAdvanceDays(item.advance_days || 3);
     setNotifyHour(item.notify_hour ?? 8);
+    setNotifyMinute(item.notify_minute ?? 0);
     setShowModal(true);
   };
 
@@ -80,7 +83,7 @@ export default function BirthdaysScreen() {
     setSaving(true);
     try {
       const dateStr = pickerDate.toISOString().split('T')[0];
-      const payload = { person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays, notify_hour: notifyHour };
+      const payload = { person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays, notify_hour: notifyHour, notify_minute: notifyMinute };
       if (editingId) {
         await api.updateBirthday(editingId, payload);
       } else {
@@ -176,18 +179,28 @@ export default function BirthdaysScreen() {
               </TouchableOpacity>
 
               <Text style={st.inputLabel}>Hora del recordatorio</Text>
-              <View style={st.hourRow}>
-                <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyHour(h => (h - 1 + 24) % 24)}>
-                  <Ionicons name="remove" size={22} color={C.purple} />
-                </TouchableOpacity>
-                <View style={st.hourDisplay}>
-                  <Ionicons name="time-outline" size={16} color={C.purple} style={{ marginRight: 6 }} />
-                  <Text style={st.hourText}>{fmtHour(notifyHour)}</Text>
+              <View style={st.timeRow}>
+                <View style={[st.hourRow, { flex: 1, marginRight: 8 }]}>
+                  <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyHour(h => (h - 1 + 24) % 24)}>
+                    <Ionicons name="remove" size={20} color={C.purple} />
+                  </TouchableOpacity>
+                  <Text style={st.hourText}>{String(notifyHour).padStart(2, '0')}</Text>
+                  <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyHour(h => (h + 1) % 24)}>
+                    <Ionicons name="add" size={20} color={C.purple} />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyHour(h => (h + 1) % 24)}>
-                  <Ionicons name="add" size={22} color={C.purple} />
-                </TouchableOpacity>
+                <Text style={st.timeSep}>:</Text>
+                <View style={[st.hourRow, { flex: 1, marginLeft: 8 }]}>
+                  <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyMinute(m => (m - 5 + 60) % 60)}>
+                    <Ionicons name="remove" size={20} color={C.purple} />
+                  </TouchableOpacity>
+                  <Text style={st.hourText}>{String(notifyMinute).padStart(2, '0')}</Text>
+                  <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyMinute(m => (m + 5) % 60)}>
+                    <Ionicons name="add" size={20} color={C.purple} />
+                  </TouchableOpacity>
+                </View>
               </View>
+              <Text style={st.timeHint}>{fmtTime(notifyHour, notifyMinute)}</Text>
 
               <Text style={st.inputLabel}>Avisar con anticipación</Text>
               <View style={st.advanceRow}>
@@ -237,10 +250,12 @@ const st = StyleSheet.create({
   input: { borderWidth: 1, borderColor: C.cardBorder, borderRadius: 12, padding: 14, fontSize: 15, marginBottom: 16, color: C.text, backgroundColor: C.bg, fontFamily: fonts.regular },
   pickerBtn: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: C.cardBorder, borderRadius: 12, padding: 14, marginBottom: 16, backgroundColor: C.bg, gap: 10 },
   pickerText: { flex: 1, fontSize: 15, color: C.text, fontFamily: fonts.regular, textTransform: 'capitalize' },
-  hourRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: C.cardBorder, borderRadius: 12, backgroundColor: C.bg, overflow: 'hidden' },
-  hourStepBtn: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
-  hourDisplay: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
-  hourText: { fontSize: 16, fontFamily: fonts.semibold, color: C.text },
+  timeRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  timeSep: { fontSize: 22, fontFamily: fonts.bold, color: C.text, marginTop: -4 },
+  timeHint: { fontSize: 12, fontFamily: fonts.regular, color: C.muted, textAlign: 'center', marginBottom: 16 },
+  hourRow: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: C.cardBorder, borderRadius: 12, backgroundColor: C.bg, overflow: 'hidden' },
+  hourStepBtn: { width: 40, height: 44, justifyContent: 'center', alignItems: 'center' },
+  hourText: { flex: 1, fontSize: 16, fontFamily: fonts.semibold, color: C.text, textAlign: 'center' },
   advanceRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
   advanceBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: C.bg, borderWidth: 1, borderColor: C.cardBorder, alignItems: 'center' },
   advanceActive: { backgroundColor: C.purple, borderColor: C.purple },
