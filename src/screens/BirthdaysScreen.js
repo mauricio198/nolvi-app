@@ -144,7 +144,6 @@ export default function BirthdaysScreen() {
                 mode="date"
                 onConfirm={(date) => { setPickerDate(date); setShowPicker(false); }}
                 onCancel={() => setShowPicker(false)}
-                maximumDate={new Date()}
               />
               <View style={st.modalHandle} />
               <Text style={st.modalTitle}>Nuevo cumpleaños</Text>
