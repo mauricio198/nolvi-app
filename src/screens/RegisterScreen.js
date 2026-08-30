@@ -9,6 +9,8 @@ import theme, { fonts } from '../theme';
 import { authRegister } from '../services/api';
 
 export default function RegisterScreen({ navigation }) {
+  const [name, setName]         = useState('');
+  const [phone, setPhone]       = useState('');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm]   = useState('');
@@ -17,6 +19,14 @@ export default function RegisterScreen({ navigation }) {
   const [loading, setLoading]   = useState(false);
 
   async function handleRegister() {
+    if (!name.trim()) {
+      Alert.alert('Error', 'Escribe tu nombre');
+      return;
+    }
+    if (!phone.trim()) {
+      Alert.alert('Error', 'Escribe tu número de teléfono');
+      return;
+    }
     if (!email.trim() || !password || !confirm) {
       Alert.alert('Campos requeridos', 'Completa todos los campos.');
       return;
@@ -32,7 +42,7 @@ export default function RegisterScreen({ navigation }) {
 
     setLoading(true);
     try {
-      const data = await authRegister(email.trim(), password);
+      const data = await authRegister(email.trim(), password, name.trim(), phone.trim());
 
       // Supabase puede pedir verificación de email (devuelve token vacío)
       if (!data.access_token) {
@@ -72,6 +82,32 @@ export default function RegisterScreen({ navigation }) {
         {/* Card */}
         <View style={styles.card}>
           <Text style={styles.title}>Crear cuenta</Text>
+
+          {/* Nombre */}
+          <View style={styles.inputWrap}>
+            <Ionicons name="person-outline" size={18} color={theme.muted} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Tu nombre"
+              placeholderTextColor={theme.muted}
+              autoCorrect={false}
+              value={name}
+              onChangeText={setName}
+            />
+          </View>
+
+          {/* Teléfono */}
+          <View style={styles.inputWrap}>
+            <Ionicons name="call-outline" size={18} color={theme.muted} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Número de teléfono"
+              placeholderTextColor={theme.muted}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+            />
+          </View>
 
           {/* Email */}
           <View style={styles.inputWrap}>

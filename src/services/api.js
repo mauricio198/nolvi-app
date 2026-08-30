@@ -24,11 +24,11 @@ export async function authLogin(email, password) {
   return data;
 }
 
-export async function authRegister(email, password, name) {
+export async function authRegister(email, password, name, phone) {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password, name }),
+    body: JSON.stringify({ email, password, name, phone }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error al registrarse');
