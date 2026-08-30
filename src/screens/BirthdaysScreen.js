@@ -92,7 +92,7 @@ export default function BirthdaysScreen() {
       setShowModal(false);
       setEditingId(null);
       load();
-    } catch (e) { Alert.alert('Error', 'No se pudo guardar'); } finally { setSaving(false); }
+    } catch (e) { Alert.alert('Error', e?.message || JSON.stringify(e)); } finally { setSaving(false); }
   };
 
   const sortedBirthdays = [...birthdays].sort((a, b) => daysUntil(a.birth_date) - daysUntil(b.birth_date));

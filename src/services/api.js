@@ -152,16 +152,18 @@ const api = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Error');
-    return res.json();
+    const text = await res.text();
+    if (!res.ok) throw new Error(`${res.status}: ${text}`);
+    return JSON.parse(text);
   },
   async updateBirthday(id, data) {
     const res = await authFetch(`/birthdays/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Error');
-    return res.json();
+    const text = await res.text();
+    if (!res.ok) throw new Error(`${res.status}: ${text}`);
+    return JSON.parse(text);
   },
   async deleteBirthday(id) {
     const res = await authFetch(`/birthdays/${id}`, { method: 'DELETE' });
