@@ -1,5 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -8,11 +9,16 @@ import C, { fonts } from '../theme';
 import AnimatedCard from '../components/AnimatedCard';
 
 export default function HomeScreen({ navigation }) {
+  const [userName, setUserName]   = useState('');
   const [reminders, setReminders] = useState([]);
   const [tasks, setTasks]         = useState([]);
   const [expenses, setExpenses]   = useState([]);
   const [birthdays, setBirthdays] = useState([]);
   const [loading, setLoading]     = useState(true);
+
+  useEffect(() => {
+    AsyncStorage.getItem('nolvi_user_name').then(n => { if (n) setUserName(n); });
+  }, []);
 
   const loadData = async () => {
     try {
@@ -77,7 +83,7 @@ export default function HomeScreen({ navigation }) {
         <View style={st.header}>
           <View>
             <Text style={st.logo}>NOLVI</Text>
-            <Text style={st.greeting}>¡Hola! 👋</Text>
+            <Text style={st.greeting}>¡Hola{userName ? `, ${userName}` : ''}! 👋</Text>
           </View>
           <Text style={st.subtitle}>Tu resumen de hoy</Text>
         </View>

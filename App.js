@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -7,6 +7,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { useFonts, Poppins_300Light, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getMyProfile } from './src/services/api';
 
 import SplashScreen    from './src/screens/SplashScreen';
 import LoginScreen     from './src/screens/LoginScreen';
@@ -66,7 +68,19 @@ export default function App() {
     setAuthChecking(true);
     try {
       const token = await SecureStore.getItemAsync('access_token');
-      setIsLoggedIn(!!token);
+      if (token) {
+        try {
+          const profile = await getMyProfile();
+          if (profile?.name) {
+            await AsyncStorage.setItem('nolvi_user_name', profile.name);
+          }
+        } catch (err) {
+          // perfil no disponible, continuar sin nombre
+        }
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+      }
     } catch {
       setIsLoggedIn(false);
     } finally {
