@@ -151,6 +151,28 @@ const api = {
     return res.json();
   },
 
+  // ── Notas ──
+  async getNotes() {
+    const res = await authFetch('/notes/me');
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async createNote(data) {
+    const res = await authFetch('/notes/me', { method: 'POST', body: JSON.stringify(data) });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async updateNote(id, data) {
+    const res = await authFetch(`/notes/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async deleteNote(id) {
+    const res = await authFetch(`/notes/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+
   // ── Cumpleaños ──
   async getBirthdays() {
     const res = await authFetch('/birthdays/me');

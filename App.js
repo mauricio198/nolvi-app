@@ -20,16 +20,18 @@ import TasksScreen     from './src/screens/TasksScreen';
 import ExpensesScreen  from './src/screens/ExpensesScreen';
 import ProfileScreen   from './src/screens/ProfileScreen';
 import BirthdaysScreen from './src/screens/BirthdaysScreen';
+import NotesScreen     from './src/screens/NotesScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 const TABS = {
-  Inicio: { icon: 'home', iconOut: 'home-outline' },
-  Recordatorios: { icon: 'notifications', iconOut: 'notifications-outline' },
-  Tareas: { icon: 'checkmark-circle', iconOut: 'checkmark-circle-outline' },
-  Gastos: { icon: 'wallet', iconOut: 'wallet-outline' },
-  Perfil: { icon: 'person', iconOut: 'person-outline' },
+  Inicio:        { icon: 'home',            iconOut: 'home-outline' },
+  Recordatorios: { icon: 'notifications',   iconOut: 'notifications-outline' },
+  Tareas:        { icon: 'checkmark-circle', iconOut: 'checkmark-circle-outline' },
+  Gastos:        { icon: 'wallet',           iconOut: 'wallet-outline' },
+  Notas:         { icon: 'journal',          iconOut: 'journal-outline' },
+  Perfil:        { icon: 'person',           iconOut: 'person-outline' },
 };
 
 function MainTabs() {
@@ -52,6 +54,7 @@ function MainTabs() {
       <Tab.Screen name="Recordatorios" component={RemindersScreen} />
       <Tab.Screen name="Tareas" component={TasksScreen} />
       <Tab.Screen name="Gastos" component={ExpensesScreen} />
+      <Tab.Screen name="Notas"  component={NotesScreen} />
       <Tab.Screen name="Perfil" component={ProfileScreen} />
     </Tab.Navigator>
   );
