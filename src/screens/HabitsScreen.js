@@ -1,11 +1,13 @@
 import React, { useState, useCallback } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput,
-  Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView,
+  Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
+import AnimatedCheckbox from '../components/AnimatedCheckbox';
 import C, { fonts } from '../theme';
 
 const ICONS = [
@@ -46,12 +48,14 @@ export default function HabitsScreen() {
   const [saving, setSaving]       = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
-  const [toggling, setToggling]   = useState(null); // id siendo toggleado
+  const [toggling, setToggling]   = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const load = async () => {
     try { const d = await api.getHabits(); setHabits(Array.isArray(d) ? d : []); }
     catch (e) {} finally { setLoading(false); }
   };
+  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const openNew = () => { setName(''); setIcon('checkmark-circle-outline'); setColor('#7C6AF7'); setEditingId(null); setShowModal(true); };
@@ -85,11 +89,17 @@ export default function HabitsScreen() {
     if (toggling) return;
     setToggling(item.id);
     const done = isLoggedToday(item.logs);
+    Haptics.impactAsync(done ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium);
     try {
       if (done) {
         await api.unlogHabit(item.id);
       } else {
         await api.logHabit(item.id);
+        // Si completó todos los hábitos, feedback de éxito
+        const newDone = habits.filter(h => isLoggedToday(h.logs)).length + 1;
+        if (newDone === habits.length) {
+          setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 300);
+        }
       }
       await load();
     } catch (e) {
@@ -112,19 +122,16 @@ export default function HabitsScreen() {
         onPress={() => setExpandedId(isExpanded ? null : item.id)}
         activeOpacity={0.85}
       >
-        {/* Checkbox */}
-        <TouchableOpacity
-          onPress={() => handleToggle(item)}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          disabled={toggling === item.id}
-          style={{ marginRight: 12 }}
-        >
-          <View style={[st.checkCircle, done && { backgroundColor: item.color, borderColor: item.color }]}>
-            {(done || toggling === item.id)
-              ? <Ionicons name={toggling === item.id ? 'ellipsis-horizontal' : 'checkmark'} size={16} color="#FFF" />
-              : null}
-          </View>
-        </TouchableOpacity>
+        {/* Checkbox animado */}
+        <View style={{ marginRight: 12 }}>
+          <AnimatedCheckbox
+            checked={done}
+            color={item.color}
+            onPress={() => handleToggle(item)}
+            disabled={toggling === item.id}
+            size={28}
+          />
+        </View>
 
         {/* Ícono */}
         <View style={[st.iconCircle, { backgroundColor: item.color + '20' }]}>
@@ -193,6 +200,7 @@ export default function HabitsScreen() {
         keyExtractor={(it) => it.id}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C6AF7" colors={['#7C6AF7']} />}
         ListEmptyComponent={
           <View style={st.emptyWrap}>
             <Ionicons name="ribbon-outline" size={52} color={C.muted} />

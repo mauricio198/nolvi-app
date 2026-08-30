@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView, Keyboard, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from '../components/DateTimePickerModal';
 import { useFocusEffect } from '@react-navigation/native';
@@ -18,7 +18,9 @@ export default function RemindersScreen() {
   const [editingId, setEditingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = async () => { try { const d = await api.getReminders(); setReminders(Array.isArray(d) ? d : []); } catch (e) {} finally { setLoading(false); } };
+  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const openModal = () => { setTitle(''); setPickerDate(new Date()); setEditingId(null); setShowModal(true); };
@@ -93,6 +95,7 @@ export default function RemindersScreen() {
     <View style={st.container}>
       <View style={st.header}><View style={st.headerRow}><Ionicons name="notifications" size={24} color="#FFF" /><Text style={st.headerTitle}>Recordatorios</Text></View><Text style={st.headerCount}>{reminders.length} total</Text></View>
       <FlatList data={reminders} keyExtractor={(it, i) => it.id?.toString() || i.toString()} renderItem={renderItem} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.purple} colors={[C.purple]} />}
         ListEmptyComponent={<View style={st.emptyWrap}><Ionicons name="notifications-off-outline" size={48} color={C.muted} /><Text style={st.emptyText}>Sin recordatorios</Text><Text style={st.emptySubText}>Toca + para crear uno</Text></View>} />
       <TouchableOpacity style={st.fab} onPress={openModal}><Ionicons name="add" size={30} color="#FFF" /></TouchableOpacity>
 

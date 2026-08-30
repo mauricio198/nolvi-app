@@ -1,8 +1,10 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
+import AnimatedCheckbox from '../components/AnimatedCheckbox';
 import C, { fonts } from '../theme';
 
 export default function TasksScreen() {
@@ -14,7 +16,9 @@ export default function TasksScreen() {
   const [editingId, setEditingId] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = async () => { try { const d = await api.getTasks(); setTasks(Array.isArray(d) ? d : []); } catch (e) {} finally { setLoading(false); } };
+  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const openModal = () => { setTitle(''); setEditingId(null); setShowModal(true); };
@@ -34,7 +38,15 @@ export default function TasksScreen() {
     } catch (e) { Alert.alert('Error', 'No se pudo guardar'); } finally { setSaving(false); }
   };
 
-  const handleComplete = async (id) => { try { await api.completeTask(id); load(); } catch (e) { Alert.alert('Error', 'No se pudo completar'); } };
+  const handleComplete = async (id) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      await api.completeTask(id);
+      const remaining = tasks.filter(t => !t.is_completed && t.id !== id).length;
+      if (remaining === 0) setTimeout(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success), 300);
+      load();
+    } catch (e) { Alert.alert('Error', 'No se pudo completar'); }
+  };
 
   const handleDelete = (id) => {
     Alert.alert('Eliminar', '¿Seguro?', [
@@ -50,9 +62,14 @@ export default function TasksScreen() {
     const isExpanded = expandedId === item.id;
     return (
       <TouchableOpacity style={[st.card, item.is_completed && st.cardDone, isExpanded && st.cardExpanded]} onPress={() => setExpandedId(isExpanded ? null : item.id)} activeOpacity={0.85}>
-        <TouchableOpacity onPress={() => !item.is_completed && handleComplete(item.id)} style={st.checkbox} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <View style={[st.checkCircle, item.is_completed && st.checkDone]}>{item.is_completed && <Ionicons name="checkmark" size={14} color="#FFF" />}</View>
-        </TouchableOpacity>
+        <View style={st.checkbox}>
+          <AnimatedCheckbox
+            checked={item.is_completed}
+            color={C.green}
+            onPress={() => !item.is_completed && handleComplete(item.id)}
+            size={26}
+          />
+        </View>
         <View style={{ flex: 1 }}>
           <Text style={[st.cardText, item.is_completed && st.textDone]}>{item.title}</Text>
         </View>
@@ -80,6 +97,7 @@ export default function TasksScreen() {
     <View style={st.container}>
       <View style={st.header}><View style={st.headerRow}><Ionicons name="checkmark-circle" size={24} color="#FFF" /><Text style={st.headerTitle}>Tareas</Text></View><Text style={st.headerCount}>{pending.length} pendientes</Text></View>
       <FlatList data={[...pending, ...completed]} keyExtractor={(it, i) => it.id?.toString() || i.toString()} renderItem={renderItem} contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.green} colors={[C.green]} />}
         ListEmptyComponent={<View style={st.emptyWrap}><Ionicons name="clipboard-outline" size={48} color={C.muted} /><Text style={st.emptyText}>Sin tareas</Text><Text style={st.emptySubText}>Toca + para crear una</Text></View>} />
       <TouchableOpacity style={st.fab} onPress={openModal}><Ionicons name="add" size={30} color="#FFF" /></TouchableOpacity>
       <Modal visible={showModal} animationType="slide" transparent>

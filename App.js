@@ -48,7 +48,13 @@ function MainTabs() {
           const cfg = TABS[route.name];
           return <Ionicons name={focused ? cfg.icon : cfg.iconOut} size={22} color={color} />;
         },
-        tabBarStyle: { height: 85, paddingBottom: 25, paddingTop: 8, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#EAEAF2', elevation: 0 },
+        tabBarStyle: {
+          height: 85, paddingBottom: 25, paddingTop: 8,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1, borderTopColor: '#EAEAF2',
+          shadowColor: '#000', shadowOffset: { width: 0, height: -4 },
+          shadowOpacity: 0.06, shadowRadius: 12, elevation: 12,
+        },
         tabBarLabelStyle: { fontSize: 11, fontFamily: 'Poppins_600SemiBold' },
       })}
     >

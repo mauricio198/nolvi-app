@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
@@ -17,10 +17,12 @@ export default function NotesScreen() {
   const [expandedId, setExpandedId] = useState(null);
   const [search, setSearch]       = useState('');
 
+  const [refreshing, setRefreshing] = useState(false);
   const load = async () => {
     try { const d = await api.getNotes(); setNotes(Array.isArray(d) ? d : []); }
     catch (e) {} finally { setLoading(false); }
   };
+  const onRefresh = async () => { setRefreshing(true); await load(); setRefreshing(false); };
   useFocusEffect(useCallback(() => { load(); }, []));
 
   const openNew = () => { setContent(''); setEditingId(null); setShowModal(true); };
@@ -130,6 +132,7 @@ export default function NotesScreen() {
         keyExtractor={(it, i) => it.id?.toString() || i.toString()}
         renderItem={renderItem}
         contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={AMBER} colors={[AMBER]} />}
         ListEmptyComponent={
           <View style={st.emptyWrap}>
             <Ionicons name="journal-outline" size={48} color={C.muted} />
