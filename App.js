@@ -8,7 +8,8 @@ import { ActivityIndicator, View, StyleSheet } from 'react-native';
 import { useFonts, Poppins_300Light, Poppins_400Regular, Poppins_500Medium, Poppins_600SemiBold, Poppins_700Bold } from '@expo-google-fonts/poppins';
 import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { getMyProfile } from './src/services/api';
+import { getMyProfile, updateMyProfile } from './src/services/api';
+import { registerForPushNotifications } from './src/services/notifications';
 
 import SplashScreen    from './src/screens/SplashScreen';
 import LoginScreen     from './src/screens/LoginScreen';
@@ -73,6 +74,12 @@ export default function App() {
           const profile = await getMyProfile();
           if (profile?.name) {
             await AsyncStorage.setItem('nolvi_user_name', profile.name);
+          }
+          if (!profile?.expo_push_token) {
+            const pushToken = await registerForPushNotifications();
+            if (pushToken) {
+              updateMyProfile({ expo_push_token: pushToken }).catch(() => {});
+            }
           }
         } catch (err) {
           // perfil no disponible, continuar sin nombre

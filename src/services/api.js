@@ -24,11 +24,11 @@ export async function authLogin(email, password) {
   return data;
 }
 
-export async function authRegister(email, password) {
+export async function authRegister(email, password, name) {
   const res = await fetch(`${API_URL}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, name }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || 'Error al registrarse');
@@ -83,8 +83,9 @@ const api = {
       method: 'POST',
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Error');
-    return res.json();
+    const text = await res.text();
+    if (!res.ok) throw new Error(text);
+    return JSON.parse(text);
   },
   async deleteReminder(id) {
     const res = await authFetch(`/reminders/${id}`, { method: 'DELETE' });
@@ -155,5 +156,25 @@ const api = {
     return res.json();
   },
 };
+
+export async function updateMyProfile(data) {
+  const res = await authFetch('/users/me', {
+    method: 'PATCH',
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error('Error al actualizar perfil');
+  return res.json();
+}
+
+export async function getMyProfile() {
+  const res = await authFetch('/users/me');
+  console.log('getMyProfile status:', res.status);
+  if (!res.ok) {
+    const text = await res.text();
+    console.log('getMyProfile error body:', text);
+    throw new Error('No se pudo obtener el perfil');
+  }
+  return res.json();
+}
 
 export default api;
