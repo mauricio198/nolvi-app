@@ -107,7 +107,10 @@ export default function HomeScreen({ navigation }) {
             <Text style={st.dateLabel}>{getTodayLabel()}</Text>
           </View>
           <View style={st.headerRight}>
-            <TouchableOpacity style={st.bellBtn} onPress={() => navigation.navigate('Recordatorios')}>
+            <TouchableOpacity style={st.bellBtn} onPress={() => navigation.navigate('Calendario')}>
+              <Ionicons name="calendar-outline" size={22} color="#FFF" />
+            </TouchableOpacity>
+            <TouchableOpacity style={[st.bellBtn, { marginLeft: 8 }]} onPress={() => navigation.navigate('Recordatorios')}>
               <Ionicons name="notifications-outline" size={22} color="#FFF" />
               {reminders.length > 0 && <View style={st.bellDot} />}
             </TouchableOpacity>

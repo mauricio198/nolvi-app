@@ -22,6 +22,7 @@ import ProfileScreen   from './src/screens/ProfileScreen';
 import BirthdaysScreen from './src/screens/BirthdaysScreen';
 import NotesScreen     from './src/screens/NotesScreen';
 import HabitsScreen    from './src/screens/HabitsScreen';
+import CalendarScreen  from './src/screens/CalendarScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -137,6 +138,7 @@ export default function App() {
               <Stack.Screen name="MainTabs"   component={MainTabs} />
               <Stack.Screen name="Cumpleaños" component={BirthdaysScreen} options={{ presentation: 'card' }} />
               <Stack.Screen name="Hábitos"    component={HabitsScreen}    options={{ presentation: 'card' }} />
+              <Stack.Screen name="Calendario" component={CalendarScreen}   options={{ presentation: 'card' }} />
             </>
           ) : (
             // Sin sesión → pantallas públicas de auth
@@ -147,6 +149,7 @@ export default function App() {
               <Stack.Screen name="MainTabs"   component={MainTabs} />
               <Stack.Screen name="Cumpleaños" component={BirthdaysScreen} options={{ presentation: 'card' }} />
               <Stack.Screen name="Hábitos"    component={HabitsScreen}    options={{ presentation: 'card' }} />
+              <Stack.Screen name="Calendario" component={CalendarScreen}   options={{ presentation: 'card' }} />
             </>
           )}
         </Stack.Navigator>
