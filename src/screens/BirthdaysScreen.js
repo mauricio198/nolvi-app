@@ -204,7 +204,7 @@ export default function BirthdaysScreen() {
 
               <Text style={st.inputLabel}>Avisar con anticipación</Text>
               <View style={st.advanceRow}>
-                {[1, 3, 7].map(d => (
+                {[1, 2, 3, 7].map(d => (
                   <TouchableOpacity key={d} style={[st.advanceBtn, advanceDays === d && st.advanceActive]} onPress={() => setAdvanceDays(d)}>
                     <Text style={[st.advanceTxt, advanceDays === d && st.advanceTxtActive]}>{d} día{d > 1 ? 's' : ''}</Text>
                   </TouchableOpacity>
