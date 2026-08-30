@@ -75,11 +75,9 @@ export default function App() {
           if (profile?.name) {
             await AsyncStorage.setItem('nolvi_user_name', profile.name);
           }
-          if (!profile?.expo_push_token) {
-            const pushToken = await registerForPushNotifications();
-            if (pushToken) {
-              updateMyProfile({ expo_push_token: pushToken }).catch(() => {});
-            }
+          const pushToken = await registerForPushNotifications();
+          if (pushToken && pushToken !== profile?.expo_push_token) {
+            updateMyProfile({ expo_push_token: pushToken }).catch(() => {});
           }
         } catch (err) {
           // perfil no disponible, continuar sin nombre

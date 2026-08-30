@@ -168,12 +168,7 @@ export async function updateMyProfile(data) {
 
 export async function getMyProfile() {
   const res = await authFetch('/users/me');
-  console.log('getMyProfile status:', res.status);
-  if (!res.ok) {
-    const text = await res.text();
-    console.log('getMyProfile error body:', text);
-    throw new Error('No se pudo obtener el perfil');
-  }
+  if (!res.ok) throw new Error('No se pudo obtener el perfil');
   return res.json();
 }
 
