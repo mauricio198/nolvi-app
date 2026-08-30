@@ -151,6 +151,38 @@ const api = {
     return res.json();
   },
 
+  // ── Hábitos ──
+  async getHabits() {
+    const res = await authFetch('/habits/me');
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async createHabit(data) {
+    const res = await authFetch('/habits/me', { method: 'POST', body: JSON.stringify(data) });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async updateHabit(id, data) {
+    const res = await authFetch(`/habits/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async deleteHabit(id) {
+    const res = await authFetch(`/habits/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async logHabit(id) {
+    const res = await authFetch(`/habits/${id}/log`, { method: 'POST' });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async unlogHabit(id) {
+    const res = await authFetch(`/habits/${id}/log`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+
   // ── Notas ──
   async getNotes() {
     const res = await authFetch('/notes/me');

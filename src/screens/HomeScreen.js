@@ -24,6 +24,7 @@ export default function HomeScreen({ navigation }) {
   const [tasks, setTasks]         = useState([]);
   const [expenses, setExpenses]   = useState([]);
   const [birthdays, setBirthdays] = useState([]);
+  const [habits, setHabits]       = useState([]);
   const [loading, setLoading]     = useState(true);
 
   useEffect(() => {
@@ -32,16 +33,18 @@ export default function HomeScreen({ navigation }) {
 
   const loadData = async () => {
     try {
-      const [r, t, e, b] = await Promise.all([
+      const [r, t, e, b, h] = await Promise.all([
         api.getReminders().catch(() => []),
         api.getTasks().catch(() => []),
         api.getExpenses().catch(() => []),
         api.getBirthdays().catch(() => []),
+        api.getHabits().catch(() => []),
       ]);
       setReminders(Array.isArray(r) ? r : []);
       setTasks(Array.isArray(t) ? t : []);
       setExpenses(Array.isArray(e) ? e : []);
       setBirthdays(Array.isArray(b) ? b : []);
+      setHabits(Array.isArray(h) ? h : []);
     } catch (err) {}
     finally { setLoading(false); }
   };
@@ -69,6 +72,11 @@ export default function HomeScreen({ navigation }) {
     : null;
   const nextBirthdayDays = nextBirthday ? daysUntilBirthday(nextBirthday.birth_date) : null;
   const nextTask = pendingTasks.length > 0 ? pendingTasks[0] : null;
+
+  const todayStr2 = new Date().toDateString();
+  const habitsDoneToday = habits.filter(h =>
+    (h.logs || []).some(l => new Date(l).toDateString() === todayStr2)
+  ).length;
 
   const topCategory = expenses.reduce((acc, e) => {
     const cat = e.category || 'Otros';
@@ -217,6 +225,26 @@ export default function HomeScreen({ navigation }) {
             </View>
             <Ionicons name="chevron-forward" size={15} color={C.muted} />
           </TouchableOpacity>
+
+          {habits.length > 0 && (
+            <>
+              <View style={st.divider} />
+              <TouchableOpacity style={st.previewRow} onPress={() => navigation.navigate('Hábitos')}>
+                <View style={[st.previewIcon, { backgroundColor: '#EDE9FE' }]}>
+                  <Ionicons name="ribbon-outline" size={17} color="#7C6AF7" />
+                </View>
+                <View style={st.previewText}>
+                  <Text style={st.previewLabel}>Hábitos de hoy</Text>
+                  <Text style={st.previewValue} numberOfLines={1}>
+                    {habitsDoneToday === habits.length
+                      ? '¡Todos completados! 🎉'
+                      : `${habitsDoneToday} de ${habits.length} completados`}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={15} color={C.muted} />
+              </TouchableOpacity>
+            </>
+          )}
         </AnimatedCard>
 
       </ScrollView>
