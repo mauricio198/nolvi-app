@@ -226,25 +226,23 @@ export default function HomeScreen({ navigation }) {
             <Ionicons name="chevron-forward" size={15} color={C.muted} />
           </TouchableOpacity>
 
-          {habits.length > 0 && (
-            <>
-              <View style={st.divider} />
-              <TouchableOpacity style={st.previewRow} onPress={() => navigation.navigate('Hábitos')}>
-                <View style={[st.previewIcon, { backgroundColor: '#EDE9FE' }]}>
-                  <Ionicons name="ribbon-outline" size={17} color="#7C6AF7" />
-                </View>
-                <View style={st.previewText}>
-                  <Text style={st.previewLabel}>Hábitos de hoy</Text>
-                  <Text style={st.previewValue} numberOfLines={1}>
-                    {habitsDoneToday === habits.length
-                      ? '¡Todos completados! 🎉'
-                      : `${habitsDoneToday} de ${habits.length} completados`}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={15} color={C.muted} />
-              </TouchableOpacity>
-            </>
-          )}
+          <View style={st.divider} />
+          <TouchableOpacity style={st.previewRow} onPress={() => navigation.navigate('Hábitos')}>
+            <View style={[st.previewIcon, { backgroundColor: '#EDE9FE' }]}>
+              <Ionicons name="ribbon-outline" size={17} color="#7C6AF7" />
+            </View>
+            <View style={st.previewText}>
+              <Text style={st.previewLabel}>Hábitos de hoy</Text>
+              <Text style={st.previewValue} numberOfLines={1}>
+                {habits.length === 0
+                  ? 'Crea tu primer hábito ✨'
+                  : habitsDoneToday === habits.length
+                  ? '¡Todos completados! 🎉'
+                  : `${habitsDoneToday} de ${habits.length} completados`}
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={15} color={C.muted} />
+          </TouchableOpacity>
         </AnimatedCard>
 
       </ScrollView>
