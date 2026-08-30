@@ -1,11 +1,16 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, TextInput, Alert, ActivityIndicator, Modal, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
-// Platform kept for KeyboardAvoidingView behavior prop
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePickerModal from '../components/DateTimePickerModal';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
 import C, { fonts } from '../theme';
+
+const fmtHour = (h) => {
+  const suffix = h < 12 ? 'AM' : 'PM';
+  const display = h % 12 === 0 ? 12 : h % 12;
+  return `${display}:00 ${suffix}`;
+};
 
 export default function BirthdaysScreen() {
   const [birthdays, setBirthdays] = useState([]);
@@ -15,8 +20,10 @@ export default function BirthdaysScreen() {
   const [pickerDate, setPickerDate] = useState(new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [advanceDays, setAdvanceDays] = useState(3);
+  const [notifyHour, setNotifyHour] = useState(8);
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
 
   const load = async () => {
     try { const d = await api.getBirthdays(); setBirthdays(Array.isArray(d) ? d : []); }
@@ -28,26 +35,9 @@ export default function BirthdaysScreen() {
     setName('');
     setPickerDate(new Date());
     setAdvanceDays(3);
+    setNotifyHour(8);
     setEditingId(null);
     setShowModal(true);
-  };
-
-  const fmtDate = (d) => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
-
-  // Calcula días hasta el próximo cumpleaños
-  const daysUntil = (birthDateStr) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const bd = new Date(birthDateStr);
-    let next = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
-    if (next < today) next = new Date(today.getFullYear() + 1, bd.getMonth(), bd.getDate());
-    const diff = Math.round((next - today) / (1000 * 60 * 60 * 24));
-    return diff;
-  };
-
-  const fmtBirthDate = (dateStr) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
   };
 
   const openEdit = (item) => {
@@ -55,22 +45,31 @@ export default function BirthdaysScreen() {
     setName(item.person_name);
     setPickerDate(new Date(item.birth_date));
     setAdvanceDays(item.advance_days || 3);
+    setNotifyHour(item.notify_hour ?? 8);
     setShowModal(true);
   };
 
-  const handleLongPress = (item) => {
-    Alert.alert(item.person_name, '¿Qué quieres hacer?', [
-      { text: 'Editar', onPress: () => openEdit(item) },
-      { text: 'Eliminar', style: 'destructive', onPress: () => handleDelete(item.id) },
-      { text: 'Cancelar', style: 'cancel' },
-    ]);
+  const fmtDate = (d) => d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
+
+  const daysUntil = (birthDateStr) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const bd = new Date(birthDateStr);
+    let next = new Date(today.getFullYear(), bd.getMonth(), bd.getDate());
+    if (next < today) next = new Date(today.getFullYear() + 1, bd.getMonth(), bd.getDate());
+    return Math.round((next - today) / (1000 * 60 * 60 * 24));
+  };
+
+  const fmtBirthDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
   };
 
   const handleDelete = (id) => {
     Alert.alert('Eliminar', '¿Seguro que quieres eliminar este cumpleaños?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Eliminar', style: 'destructive', onPress: async () => {
-        try { await api.deleteBirthday(id); load(); }
+        try { await api.deleteBirthday(id); setExpandedId(null); load(); }
         catch (e) { Alert.alert('Error', 'No se pudo eliminar'); }
       }},
     ]);
@@ -81,10 +80,11 @@ export default function BirthdaysScreen() {
     setSaving(true);
     try {
       const dateStr = pickerDate.toISOString().split('T')[0];
+      const payload = { person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays, notify_hour: notifyHour };
       if (editingId) {
-        await api.updateBirthday(editingId, { person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays });
+        await api.updateBirthday(editingId, payload);
       } else {
-        await api.createBirthday({ person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays });
+        await api.createBirthday(payload);
       }
       setShowModal(false);
       setEditingId(null);
@@ -97,8 +97,14 @@ export default function BirthdaysScreen() {
   const renderItem = ({ item }) => {
     const days = daysUntil(item.birth_date);
     const isSoon = days <= 7;
+    const isExpanded = expandedId === item.id;
+
     return (
-      <TouchableOpacity style={st.card} onLongPress={() => handleLongPress(item)} activeOpacity={0.8}>
+      <TouchableOpacity
+        style={[st.card, isExpanded && st.cardExpanded]}
+        onPress={() => setExpandedId(isExpanded ? null : item.id)}
+        activeOpacity={0.85}
+      >
         <View style={[st.iconCircle, isSoon && { backgroundColor: C.peachLight }]}>
           <Ionicons name="gift" size={20} color={isSoon ? C.peach : C.purple} />
         </View>
@@ -106,11 +112,22 @@ export default function BirthdaysScreen() {
           <Text style={st.cardText}>{item.person_name}</Text>
           <Text style={st.cardSub}>{fmtBirthDate(item.birth_date)}</Text>
         </View>
-        <View style={st.daysBadge}>
-          <Text style={[st.daysText, isSoon && { color: C.peach }]}>
-            {days === 0 ? '¡Hoy!' : days === 1 ? 'Mañana' : `${days}d`}
-          </Text>
-        </View>
+        {isExpanded ? (
+          <View style={st.actionBtns}>
+            <TouchableOpacity style={st.actionBtn} onPress={() => { setExpandedId(null); openEdit(item); }}>
+              <Ionicons name="pencil" size={18} color={C.purple} />
+            </TouchableOpacity>
+            <TouchableOpacity style={[st.actionBtn, { marginLeft: 6 }]} onPress={() => handleDelete(item.id)}>
+              <Ionicons name="trash-outline" size={18} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={st.daysBadge}>
+            <Text style={[st.daysText, isSoon && { color: C.peach }]}>
+              {days === 0 ? '¡Hoy!' : days === 1 ? 'Mañana' : `${days}d`}
+            </Text>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };
@@ -146,7 +163,7 @@ export default function BirthdaysScreen() {
                 onCancel={() => setShowPicker(false)}
               />
               <View style={st.modalHandle} />
-              <Text style={st.modalTitle}>Nuevo cumpleaños</Text>
+              <Text style={st.modalTitle}>{editingId ? 'Editar cumpleaños' : 'Nuevo cumpleaños'}</Text>
 
               <Text style={st.inputLabel}>Nombre</Text>
               <TextInput style={st.input} placeholder="Ej: María" value={name} onChangeText={setName} placeholderTextColor={C.muted} />
@@ -157,6 +174,20 @@ export default function BirthdaysScreen() {
                 <Text style={st.pickerText}>{fmtDate(pickerDate)}</Text>
                 <Ionicons name="chevron-down" size={16} color={C.muted} />
               </TouchableOpacity>
+
+              <Text style={st.inputLabel}>Hora del recordatorio</Text>
+              <View style={st.hourRow}>
+                <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyHour(h => (h - 1 + 24) % 24)}>
+                  <Ionicons name="remove" size={22} color={C.purple} />
+                </TouchableOpacity>
+                <View style={st.hourDisplay}>
+                  <Ionicons name="time-outline" size={16} color={C.purple} style={{ marginRight: 6 }} />
+                  <Text style={st.hourText}>{fmtHour(notifyHour)}</Text>
+                </View>
+                <TouchableOpacity style={st.hourStepBtn} onPress={() => setNotifyHour(h => (h + 1) % 24)}>
+                  <Ionicons name="add" size={22} color={C.purple} />
+                </TouchableOpacity>
+              </View>
 
               <Text style={st.inputLabel}>Avisar con anticipación</Text>
               <View style={st.advanceRow}>
@@ -189,10 +220,13 @@ const st = StyleSheet.create({
   header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: 20, backgroundColor: C.purple, borderBottomLeftRadius: 28, borderBottomRightRadius: 28, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: 8 }, headerTitle: { fontSize: 22, fontFamily: fonts.bold, color: '#FFF' }, headerCount: { fontSize: 14, fontFamily: fonts.regular, color: 'rgba(255,255,255,0.7)' },
   card: { backgroundColor: C.white, borderRadius: 14, padding: 14, marginBottom: 10, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 2 },
+  cardExpanded: { borderWidth: 1.5, borderColor: C.purple },
   iconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: C.purpleLight, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   cardText: { fontSize: 15, fontFamily: fonts.semibold, color: C.text }, cardSub: { fontSize: 12, fontFamily: fonts.regular, color: C.muted, marginTop: 3, textTransform: 'capitalize' },
   daysBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: C.bg },
   daysText: { fontSize: 12, fontFamily: fonts.semibold, color: C.purple },
+  actionBtns: { flexDirection: 'row', alignItems: 'center' },
+  actionBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: C.bg, justifyContent: 'center', alignItems: 'center' },
   emptyWrap: { alignItems: 'center', marginTop: 80 }, emptyText: { fontSize: 18, color: C.textSec, marginTop: 12, fontFamily: fonts.semibold }, emptySubText: { fontSize: 14, color: C.muted, marginTop: 4, fontFamily: fonts.regular },
   fab: { position: 'absolute', bottom: 30, right: 20, width: 56, height: 56, borderRadius: 28, backgroundColor: C.purple, justifyContent: 'center', alignItems: 'center', elevation: 6, shadowColor: C.purple, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }, modalScroll: { flexGrow: 1, justifyContent: 'flex-end' },
@@ -203,6 +237,10 @@ const st = StyleSheet.create({
   input: { borderWidth: 1, borderColor: C.cardBorder, borderRadius: 12, padding: 14, fontSize: 15, marginBottom: 16, color: C.text, backgroundColor: C.bg, fontFamily: fonts.regular },
   pickerBtn: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: C.cardBorder, borderRadius: 12, padding: 14, marginBottom: 16, backgroundColor: C.bg, gap: 10 },
   pickerText: { flex: 1, fontSize: 15, color: C.text, fontFamily: fonts.regular, textTransform: 'capitalize' },
+  hourRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: C.cardBorder, borderRadius: 12, backgroundColor: C.bg, overflow: 'hidden' },
+  hourStepBtn: { width: 48, height: 48, justifyContent: 'center', alignItems: 'center' },
+  hourDisplay: { flex: 1, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  hourText: { fontSize: 16, fontFamily: fonts.semibold, color: C.text },
   advanceRow: { flexDirection: 'row', gap: 8, marginBottom: 20 },
   advanceBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, backgroundColor: C.bg, borderWidth: 1, borderColor: C.cardBorder, alignItems: 'center' },
   advanceActive: { backgroundColor: C.purple, borderColor: C.purple },
