@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '../services/api';
+import { getMyProfile, updateMyProfile } from '../services/api';
 import C, { fonts } from '../theme';
 
 // Cuando tengas el número dedicado de Nolvi, ponlo aquí (formato: 57300XXXXXXX sin + ni espacios)
@@ -51,9 +52,12 @@ const MENU_SUPPORT = [
 export default function ProfileScreen() {
   const [stats, setStats] = useState({ reminders: 0, tasks: 0, tasksDone: 0, expenses: 0, birthdays: 0 });
   const [name, setName] = useState('Usuario Nolvi');
+  const [phone, setPhone] = useState('');
   const [photo, setPhoto] = useState(null);
   const [showNameModal, setShowNameModal] = useState(false);
+  const [showPhoneModal, setShowPhoneModal] = useState(false);
   const [tempName, setTempName] = useState('');
+  const [tempPhone, setTempPhone] = useState('');
   const [notifEnabled, setNotifEnabled] = useState(true);
   const [infoModal, setInfoModal] = useState(null);
 
@@ -64,6 +68,11 @@ export default function ProfileScreen() {
       const sNotif = await AsyncStorage.getItem('nolvi_notif_enabled');
       if (sn) setName(sn); if (sp) setPhoto(sp);
       if (sNotif !== null) setNotifEnabled(sNotif === 'true');
+      try {
+        const profile = await getMyProfile();
+        if (profile?.name) { setName(profile.name); await AsyncStorage.setItem('nolvi_user_name', profile.name); }
+        if (profile?.phone && profile.phone !== 'sin-telefono') setPhone(profile.phone);
+      } catch (_) {}
     })();
   }, []);
 
@@ -82,7 +91,21 @@ export default function ProfileScreen() {
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsEditing: true, aspect: [1, 1], quality: 0.7 });
     if (!result.canceled && result.assets[0]) { setPhoto(result.assets[0].uri); await AsyncStorage.setItem('nolvi_user_photo', result.assets[0].uri); }
   };
-  const saveName = async () => { if (!tempName.trim()) return; setName(tempName.trim()); await AsyncStorage.setItem('nolvi_user_name', tempName.trim()); setShowNameModal(false); };
+  const saveName = async () => {
+    if (!tempName.trim()) return;
+    setName(tempName.trim());
+    await AsyncStorage.setItem('nolvi_user_name', tempName.trim());
+    updateMyProfile({ name: tempName.trim() }).catch(() => {});
+    setShowNameModal(false);
+  };
+
+  const savePhone = async () => {
+    if (!tempPhone.trim()) return;
+    setPhone(tempPhone.trim());
+    try { await updateMyProfile({ phone: tempPhone.trim() }); }
+    catch (_) { Alert.alert('Error', 'No se pudo guardar el teléfono'); return; }
+    setShowPhoneModal(false);
+  };
   const getInitials = (n) => { const p = n.split(' '); return p.length >= 2 ? (p[0][0] + p[1][0]).toUpperCase() : n.substring(0, 2).toUpperCase(); };
 
   const toggleNotif = async (val) => {
@@ -130,6 +153,13 @@ export default function ProfileScreen() {
         </TouchableOpacity>
         <TouchableOpacity onPress={() => { setTempName(name); setShowNameModal(true); }}>
           <View style={st.nameRow}><Text style={st.name}>{name}</Text><Ionicons name="pencil" size={14} color="rgba(255,255,255,0.7)" /></View>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => { setTempPhone(phone); setShowPhoneModal(true); }}>
+          <View style={st.phoneRow}>
+            <Ionicons name="call-outline" size={13} color="rgba(255,255,255,0.7)" />
+            <Text style={st.phoneText}>{phone || 'Agregar teléfono'}</Text>
+            <Ionicons name="pencil" size={12} color="rgba(255,255,255,0.5)" />
+          </View>
         </TouchableOpacity>
         <View style={st.badge}><Ionicons name="sparkles" size={12} color={C.purple} /><Text style={st.badgeText}> Plan Gratis</Text></View>
       </View>
@@ -193,6 +223,18 @@ export default function ProfileScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+      {/* Modal editar teléfono */}
+      <Modal visible={showPhoneModal} animationType="slide" transparent>
+        <KeyboardAvoidingView style={st.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setShowPhoneModal(false)} />
+          <View style={st.modalContent}><View style={st.modalHandle} /><Text style={st.modalTitle}>Editar teléfono</Text>
+            <TextInput style={st.input} placeholder="Ej: +57 300 000 0000" value={tempPhone} onChangeText={setTempPhone} placeholderTextColor={C.muted} keyboardType="phone-pad" autoFocus />
+            <View style={st.modalBtns}><TouchableOpacity style={st.cancelBtn} onPress={() => setShowPhoneModal(false)}><Text style={st.cancelTxt}>Cancelar</Text></TouchableOpacity>
+              <TouchableOpacity style={st.saveBtn} onPress={savePhone}><Ionicons name="checkmark" size={18} color="#FFF" /><Text style={st.saveTxt}> Guardar</Text></TouchableOpacity></View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
       {/* Modal info (ayuda, privacidad, términos) */}
       <Modal visible={!!infoModal} animationType="slide" transparent>
         <View style={st.modalOverlay}>
@@ -222,6 +264,8 @@ const st = StyleSheet.create({
   avatarText: { fontSize: 32, fontFamily: fonts.bold, color: '#FFF' },
   editBadge: { position: 'absolute', bottom: 0, right: 0, width: 30, height: 30, borderRadius: 15, backgroundColor: C.coral, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: C.purple },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 }, name: { fontSize: 22, fontFamily: fonts.bold, color: '#FFF' },
+  phoneRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 },
+  phoneText: { fontSize: 13, fontFamily: fonts.regular, color: 'rgba(255,255,255,0.75)' },
   badge: { marginTop: 8, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 12, backgroundColor: '#FFF' },
   badgeText: { fontSize: 12, color: C.purple, fontFamily: fonts.semibold },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 12, marginTop: 8 },
