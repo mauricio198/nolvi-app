@@ -87,6 +87,11 @@ const api = {
     if (!res.ok) throw new Error(text);
     return JSON.parse(text);
   },
+  async updateReminder(id, data) {
+    const res = await authFetch(`/reminders/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
   async deleteReminder(id) {
     const res = await authFetch(`/reminders/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error('Error');
@@ -104,6 +109,11 @@ const api = {
       method: 'POST',
       body: JSON.stringify(data),
     });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async updateTask(id, data) {
+    const res = await authFetch(`/tasks/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
