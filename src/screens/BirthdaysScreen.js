@@ -16,6 +16,7 @@ export default function BirthdaysScreen() {
   const [showPicker, setShowPicker] = useState(false);
   const [advanceDays, setAdvanceDays] = useState(3);
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState(null);
 
   const load = async () => {
     try { const d = await api.getBirthdays(); setBirthdays(Array.isArray(d) ? d : []); }
@@ -27,6 +28,7 @@ export default function BirthdaysScreen() {
     setName('');
     setPickerDate(new Date());
     setAdvanceDays(3);
+    setEditingId(null);
     setShowModal(true);
   };
 
@@ -48,15 +50,46 @@ export default function BirthdaysScreen() {
     return d.toLocaleDateString('es-CO', { day: 'numeric', month: 'long' });
   };
 
+  const openEdit = (item) => {
+    setEditingId(item.id);
+    setName(item.person_name);
+    setPickerDate(new Date(item.birth_date));
+    setAdvanceDays(item.advance_days || 3);
+    setShowModal(true);
+  };
+
+  const handleLongPress = (item) => {
+    Alert.alert(item.person_name, '¿Qué quieres hacer?', [
+      { text: 'Editar', onPress: () => openEdit(item) },
+      { text: 'Eliminar', style: 'destructive', onPress: () => handleDelete(item.id) },
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
+  };
+
+  const handleDelete = (id) => {
+    Alert.alert('Eliminar', '¿Seguro que quieres eliminar este cumpleaños?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+        try { await api.deleteBirthday(id); load(); }
+        catch (e) { Alert.alert('Error', 'No se pudo eliminar'); }
+      }},
+    ]);
+  };
+
   const handleCreate = async () => {
     if (!name.trim()) return Alert.alert('Error', 'Escribe el nombre');
     setSaving(true);
     try {
       const dateStr = pickerDate.toISOString().split('T')[0];
-      await api.createBirthday({ person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays });
+      if (editingId) {
+        await api.updateBirthday(editingId, { person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays });
+      } else {
+        await api.createBirthday({ person_name: name.trim(), birth_date: dateStr, advance_days: advanceDays });
+      }
       setShowModal(false);
+      setEditingId(null);
       load();
-    } catch (e) { Alert.alert('Error', 'No se pudo crear'); } finally { setSaving(false); }
+    } catch (e) { Alert.alert('Error', 'No se pudo guardar'); } finally { setSaving(false); }
   };
 
   const sortedBirthdays = [...birthdays].sort((a, b) => daysUntil(a.birth_date) - daysUntil(b.birth_date));
@@ -65,7 +98,7 @@ export default function BirthdaysScreen() {
     const days = daysUntil(item.birth_date);
     const isSoon = days <= 7;
     return (
-      <View style={st.card}>
+      <TouchableOpacity style={st.card} onLongPress={() => handleLongPress(item)} activeOpacity={0.8}>
         <View style={[st.iconCircle, isSoon && { backgroundColor: C.peachLight }]}>
           <Ionicons name="gift" size={20} color={isSoon ? C.peach : C.purple} />
         </View>
@@ -78,7 +111,7 @@ export default function BirthdaysScreen() {
             {days === 0 ? '¡Hoy!' : days === 1 ? 'Mañana' : `${days}d`}
           </Text>
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

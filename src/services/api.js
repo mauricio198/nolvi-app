@@ -155,6 +155,19 @@ const api = {
     if (!res.ok) throw new Error('Error');
     return res.json();
   },
+  async updateBirthday(id, data) {
+    const res = await authFetch(`/birthdays/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
+  async deleteBirthday(id) {
+    const res = await authFetch(`/birthdays/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Error');
+    return res.json();
+  },
 };
 
 export async function updateMyProfile(data) {
