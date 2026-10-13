@@ -118,7 +118,8 @@ export default function ProfileScreen() {
       Alert.alert('Próximamente', 'Aún no tenemos un número dedicado de Nolvi en WhatsApp. Muy pronto podrás escribirle directamente 💜');
       return;
     }
-    const url = `https://wa.me/${NOLVI_WHATSAPP_NUMBER}`;
+    // El bot solo responde a mensajes que empiezan con "Nolvi": se deja escrito el saludo
+    const url = `https://wa.me/${NOLVI_WHATSAPP_NUMBER}?text=${encodeURIComponent('Nolvi hola')}`;
     Linking.openURL(url).catch(() => Alert.alert('Error', 'No se pudo abrir WhatsApp'));
   };
 
