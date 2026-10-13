@@ -1,15 +1,6 @@
 import * as SecureStore from 'expo-secure-store';
 
 const API_URL = 'https://nolvi-backend-production.up.railway.app';
-// Perfil asociado al número de WhatsApp que usa esta app.
-// Pendiente: sustituirlo por autenticación de usuarios antes de abrir la app a más personas.
-const NOLVI_USER_ID = '6a1aae67-2d8d-4602-9df3-ed4c205ab0a8';
-const API_KEY = 'I_tNt7FJBlY-E_wyekT5D1CYc8sBxg_fF47i57OPMvY';
-
-const headers = {
-  'Content-Type': 'application/json',
-  'X-API-Key': API_KEY,
-};
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 
