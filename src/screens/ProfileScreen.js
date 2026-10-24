@@ -9,8 +9,8 @@ import api from '../services/api';
 import { getMyProfile, updateMyProfile } from '../services/api';
 import C, { fonts } from '../theme';
 
-// Cuando tengas el número dedicado de Nolvi, ponlo aquí (formato: 57300XXXXXXX sin + ni espacios)
-const NOLVI_WHATSAPP_NUMBER = null;
+// Número dedicado de Nolvi en WhatsApp: +57 311 435 1261 (formato wa.me: sin + ni espacios)
+const NOLVI_WHATSAPP_NUMBER = '573114351261';
 
 const HELP_TEXT = `¿Necesitas ayuda con Nolvi?
 
@@ -18,7 +18,7 @@ Escríbenos y te respondemos lo antes posible.
 
 Preguntas frecuentes:
 • ¿Cómo creo un recordatorio? Toca el botón + en la pantalla de Recordatorios.
-• ¿Nolvi funciona por WhatsApp? Sí, muy pronto podrás escribirle directamente.
+• ¿Nolvi funciona por WhatsApp? Sí: escríbele al +57 311 435 1261, por ejemplo "Recuérdame pagar la luz mañana a las 9" o "ayuda".
 • ¿Mis datos están seguros? Sí, se almacenan de forma segura y nunca se comparten con terceros.`;
 
 const PRIVACY_TEXT = `Privacidad — Nolvi
@@ -118,8 +118,7 @@ export default function ProfileScreen() {
       Alert.alert('Próximamente', 'Aún no tenemos un número dedicado de Nolvi en WhatsApp. Muy pronto podrás escribirle directamente 💜');
       return;
     }
-    // El bot solo responde a mensajes que empiezan con "Nolvi": se deja escrito el saludo
-    const url = `https://wa.me/${NOLVI_WHATSAPP_NUMBER}?text=${encodeURIComponent('Nolvi hola')}`;
+    const url = `https://wa.me/${NOLVI_WHATSAPP_NUMBER}?text=${encodeURIComponent('Hola Nolvi')}`;
     Linking.openURL(url).catch(() => Alert.alert('Error', 'No se pudo abrir WhatsApp'));
   };
 
